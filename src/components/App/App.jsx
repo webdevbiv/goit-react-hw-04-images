@@ -24,7 +24,10 @@ export const App = () => {
     search && setLoader(true)
     search && getPictures(search, page)
       .then(res => res.json())
-      .catch(err => setError(err))
+      .catch(err => {
+        setError(err)
+        console.log(error);
+      })
       .then(searchResults => {
         const hits = searchResults.hits
         showLoadMoreTogle(hits.length)
@@ -33,7 +36,7 @@ export const App = () => {
         })
       })
       .finally(setLoader(false))
-  }, [page, search])
+  }, [page, search, error])
 
   const showLoadMoreTogle = (length) => {
     if (length % 12 === 0 && length !== 0) {
