@@ -30,7 +30,8 @@ export const App = () => {
       })
       .then(searchResults => {
         const hits = searchResults.hits
-        showLoadMoreTogle(hits.length)
+        const total = searchResults.total
+        showLoadMoreTogle(hits.length, total, page)
         setSearchResults(prev => {
           return [...prev, ...hits]
         })
@@ -38,8 +39,9 @@ export const App = () => {
       .finally(setLoader(false))
   }, [page, search, error])
 
-  const showLoadMoreTogle = (length) => {
-    if (length % 12 === 0 && length !== 0) {
+  const showLoadMoreTogle = (length, total, page) => {
+    const totalPages = Math.floor(total / 12)
+    if (length % 12 === 0 && length !== 0 && page <= totalPages) {
       return setShowLoadMore(true)
     }
     return setShowLoadMore(false)
