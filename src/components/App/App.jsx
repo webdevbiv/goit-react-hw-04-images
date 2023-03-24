@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import { useState, useEffect } from 'react'
 
 import {
   Button,
@@ -9,120 +9,81 @@ import {
   getPictures,
 } from 'components'
 
-const INITIAL_STATE = {
-  search: '',
-  page: 1,
-  showLoadMore: false,
-  showModal: false,
-  modalPictureURL: '',
-  modalPictureALT: '',
-  loader: false,
-  searchResults: [],
-  error: null,
-}
+export const App = () => {
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [showLoadMore, setShowLoadMore] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [modalPictureURL, setModalPictureURL] = useState('')
+  const [modalPictureALT, setModalPictureALT] = useState('')
+  const [loader, setLoader] = useState(false)
+  const [searchResults, setSearchResults] = useState([])
+  const [error, setError] = useState(null)
 
-export class App extends Component {
-
-  state = { ...INITIAL_STATE }
-
-  componentDidUpdate(_, prevState) {
-    const {
-      search,
-      page,
-    } = this.state
-
-    if (prevState.search !== search || prevState.page !== page) {
-      this.loaderTogle()
-      getPictures(search, page)
-        .then(res => res.json())
-        .catch(error => this.setState({ error }))
-        .then(searchResults => {
-          const hits = searchResults.hits
-          this.showLoadMore(hits.length)
-          this.setState((prev) => ({
-            searchResults: [...prev.searchResults, ...hits]
-          }))
+  useEffect(() => {
+    search && setLoader(true)
+    search && getPictures(search, page)
+      .then(res => res.json())
+      .catch(err => setError(err))
+      .then(searchResults => {
+        const hits = searchResults.hits
+        showLoadMoreTogle(hits.length)
+        setSearchResults(prev => {
+          return [...prev, ...hits]
         })
-        .finally(this.loaderTogle())
-    }
-  }
+      })
+      .finally(setLoader(false))
+  }, [page, search])
 
-  showLoadMore = (length) => {
+  const showLoadMoreTogle = (length) => {
     if (length % 12 === 0 && length !== 0) {
-      return this.setState({ showLoadMore: true })
+      return setShowLoadMore(true)
     }
-    return this.setState({ showLoadMore: false })
+    return setShowLoadMore(false)
   }
 
-  onSubmit = (data) => {
-    this.setState({
-      search: (data.search).trim().toLowerCase(),
-      page: 1,
-      searchResults: [],
-    })
+  const onSubmit = (data) => {
+    setSearch((data.search).trim().toLowerCase())
+    setPage(1)
+    setSearchResults([])
   }
 
-  onLoadMore = () => {
-    this.setState((prev) => ({
-      page: prev.page + 1
-    }))
+  const onLoadMore = () => {
+    setPage(page + 1)
   }
 
-  loaderTogle = () => {
-    this.setState(prevState => ({
-      loader: !prevState.loader
-    }))
+  const modalOpen = ({ largeImageURL, tags }) => {
+    setModalPictureURL(largeImageURL)
+    setModalPictureALT(tags)
+    setShowModal(true)
   }
 
-  modalOpen = ({ largeImageURL, tags }) => {
-    this.setState({
-      modalPictureURL: largeImageURL,
-      modalPictureALT: tags,
-      showModal: true,
-    })
+  const modalClose = () => {
+    setShowModal(false)
   }
 
-  modalClose = () => {
-    this.setState({
-      showModal: false
-    })
-  }
-
-  render() {
-    const {
-      searchResults,
-      loader,
-      showModal,
-      modalPictureURL,
-      modalPictureALT,
-      showLoadMore
-    } = this.state
-
-    return (
-      <div className={`App `}>
-        <Searchbar onSubmit={this.onSubmit} />
-        <div className={`Container `}>
-          <ImageGallery
-            searchResults={searchResults}
-            modalOpen={this.modalOpen}
-          />
-          {showLoadMore &&
-            <Button onClick={this.onLoadMore} />
-          }
-        </div>
-        {loader && (
-          <Loader />
-        )}
-        {showModal && (
-          <Modal
-            closeModal={this.modalClose}
-            picture={modalPictureURL}
-            alt={modalPictureALT}
-          />
-        )}
+  return (
+    <div className={`App `}>
+      <Searchbar onSubmit={onSubmit} />
+      <div className={`Container `}>
+        <ImageGallery
+          searchResults={searchResults}
+          modalOpen={modalOpen}
+        />
+        {showLoadMore &&
+          <Button onClick={onLoadMore} />
+        }
       </div>
-    );
-  }
-};
-
-// test
+      {loader && (
+        <Loader />
+      )}
+      {showModal && (
+        <Modal
+          closeModal={modalClose}
+          picture={modalPictureURL}
+          alt={modalPictureALT}
+        />
+      )}
+    </div>
+  )
+}
