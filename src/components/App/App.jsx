@@ -23,11 +23,6 @@ export const App = () => {
   useEffect(() => {
     search && setLoader(true)
     search && getPictures(search, page)
-      .then(res => res.json())
-      .catch(err => {
-        setError(err)
-        console.log(error);
-      })
       .then(searchResults => {
         const hits = searchResults.hits
         const total = searchResults.total
@@ -36,8 +31,11 @@ export const App = () => {
           return [...prev, ...hits]
         })
       })
+      .catch(err => {
+        setError(err)
+      })
       .finally(setLoader(false))
-  }, [page, search, error])
+  }, [page, search])
 
   const showLoadMoreTogle = (length, total, page) => {
     const totalPages = Math.floor(total / 12)
@@ -54,7 +52,7 @@ export const App = () => {
   }
 
   const onLoadMore = () => {
-    setPage(page + 1)
+    setPage(prev => prev + 1)
   }
 
   const modalOpen = ({ largeImageURL, tags }) => {
@@ -69,6 +67,7 @@ export const App = () => {
 
   return (
     <div className={`App `}>
+      {error && (<div>{error}</div>)}
       <Searchbar onSubmit={onSubmit} />
       <div className={`Container `}>
         <ImageGallery
